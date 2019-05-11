@@ -16,6 +16,7 @@ class ViewController: UIViewController,
   @IBOutlet weak var nameTextField: UITextField!
   @IBOutlet weak var mealNameLabel: UILabel!
   @IBOutlet weak var photoImageView: UIImageView!
+  @IBOutlet weak var ratingControl: RatingControl!
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -53,10 +54,6 @@ class ViewController: UIViewController,
   }
 
   //MARK: Actions
-  @IBAction func setDefaultLabelText(_ sender: UIButton) {
-    nameTextField.text = "Default Text"
-  }
-
   @IBAction func selectImageFromPhotoLibraly(_ sender: UITapGestureRecognizer) {
     print("selectImageFromPhotoLibraly")
     // キーボードの非表示
