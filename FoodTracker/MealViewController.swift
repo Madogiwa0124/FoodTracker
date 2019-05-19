@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import os.log
 
 class MealViewController: UIViewController,
                       UITextFieldDelegate,
@@ -17,10 +18,17 @@ class MealViewController: UIViewController,
   @IBOutlet weak var photoImageView: UIImageView!
   @IBOutlet weak var ratingControl: RatingControl!
 
+  @IBOutlet weak var SaveButton: UIBarButtonItem!
+  
+  // 食事リストから渡される食事情報を保存
+  var meal: Meal?
+
   override func viewDidLoad() {
     super.viewDidLoad()
     // Handle the text field’s user input through delegate callbacks.
     nameTextField.delegate = self
+    // SaveButtonの状態を更新
+    updateSaveButtonState()
   }
 
   //MARK: UITextFieldDelegate
@@ -30,7 +38,15 @@ class MealViewController: UIViewController,
     return true
   }
 
+  func textFieldDidBeginEditing(_ textField: UITextField) {
+    // 名前入力中は、SaveButtonを非活性に
+    SaveButton.isEnabled = false
+  }
+
   func textFieldDidEndEditing(_ textField: UITextField) {
+    // 名前入力後にボタンの状態更新とタイトルへの反映を行う
+    updateSaveButtonState()
+    navigationItem.title = nameTextField.text
   }
 
   // MARK: UIImagePickerControllerDelegate
@@ -51,6 +67,28 @@ class MealViewController: UIViewController,
     dismiss(animated: true, completion: nil)
   }
 
+  // MARK: Navigation
+  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    super.prepare(for: segue, sender: sender)
+
+    // 押下されたbuttonがSaveButtonじゃない場合はlogを出力してreturn
+    guard let button = sender as? UIBarButtonItem, button === SaveButton else {
+      os_log("The save button was not pressed, cancelling", log: OSLog.default, type: .debug)
+      return
+    }
+
+    // 入力値からMealオブジェクトを作成
+    let name = nameTextField.text ?? ""
+    let photo = photoImageView.image
+    let rating = ratingControl.rating
+    meal = Meal.init(name: name, photo: photo, rating: rating)
+  }
+
+  @IBAction func cancel(_ sender: UIBarButtonItem) {
+    // 登録処理のキャンセル
+    dismiss(animated: true, completion: nil)
+  }
+
   //MARK: Actions
   @IBAction func selectImageFromPhotoLibraly(_ sender: UITapGestureRecognizer) {
     print("selectImageFromPhotoLibraly")
@@ -63,5 +101,12 @@ class MealViewController: UIViewController,
     // 画像選択時にimagePickerControllerを呼び出す
     imagePickerController.delegate = self
     present(imagePickerController, animated: true, completion: nil)
+  }
+
+  // MARK: private Methods
+  private func updateSaveButtonState() {
+    // 食事の名前の入力状態からSaveButtonの活性/非活性を制御
+    let text = nameTextField.text ?? ""
+    SaveButton.isEnabled = !text.isEmpty
   }
 }

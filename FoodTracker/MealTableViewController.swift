@@ -47,6 +47,20 @@ class MealTableViewController: UITableViewController {
     return cell
   }
 
+
+  // MARK: Actions
+  @IBAction func unwindToMealList(sender: UIStoryboardSegue) {
+    // 遷移元のViewControllerから食事情報を取得
+    if let sourceViewController = sender.source as? MealViewController,
+       let meal = sourceViewController.meal
+    {
+      // 取得した食事情報をTableViewに追加
+      let newIndexPath = IndexPath(row: meals.count, section: 0)
+      meals.append(meal)
+      tableView.insertRows(at: [newIndexPath], with: .automatic)
+    }
+  }
+
   // MARK: private methods
   private func loadSampleMeals() {
     let photo1 = UIImage(named: "meal1")
