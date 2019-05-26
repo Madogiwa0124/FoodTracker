@@ -27,6 +27,13 @@ class MealViewController: UIViewController,
     super.viewDidLoad()
     // Handle the text field’s user input through delegate callbacks.
     nameTextField.delegate = self
+    // 既存の食事を編集する場合は、食事の情報を画面項目に設定
+    if let meal = meal {
+      navigationItem.title = meal.name
+      nameTextField.text = meal.name
+      photoImageView.image = meal.photo
+      ratingControl.rating = meal.rating
+    }
     // SaveButtonの状態を更新
     updateSaveButtonState()
   }
@@ -85,8 +92,18 @@ class MealViewController: UIViewController,
   }
 
   @IBAction func cancel(_ sender: UIBarButtonItem) {
-    // 登録処理のキャンセル
-    dismiss(animated: true, completion: nil)
+    // 遷移元のViewControllerから新規追加かどうかを判定
+    let isPresentingInAddMealMode = presentingViewController is UINavigationController
+
+    if isPresentingInAddMealMode {
+      // 登録処理のキャンセル
+      dismiss(animated: true, completion: nil)
+    } else if let owningNavigationController = navigationController {
+     // 更新処理のキャンセル
+      owningNavigationController.popViewController(animated: true)
+    } else {
+      fatalError("The MealViewController is not inside a navigation controller.")
+    }
   }
 
   //MARK: Actions

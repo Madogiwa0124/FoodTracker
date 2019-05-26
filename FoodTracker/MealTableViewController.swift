@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import os.log
 
 class MealTableViewController: UITableViewController {
   // MARK: properties
@@ -14,7 +15,41 @@ class MealTableViewController: UITableViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    navigationItem.leftBarButtonItem = editButtonItem
     loadSampleMeals()
+  }
+
+  //MARK: - Navigation
+  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    super.prepare(for: segue, sender: sender)
+    // 遷移先によって処理を分岐
+    switch(segue.identifier ?? "") {
+    // 新規追加画面の場合
+    case "AddItem":
+      os_log("Add a new meal.", log: OSLog.default, type: .debug)
+    // 詳細画面の場合
+    case "ShowDetail":
+      // 遷移先のViewControllerを取得
+      guard let mealDetailViewController = segue.destination as? MealViewController else {
+        fatalError("Unexpected destination: \(segue.destination)")
+      }
+      // 選択された食事のセルを取得
+      guard let selectMealCell = sender as? MealTableViewCell else {
+        fatalError("Unexpected sender: \(String(describing: sender))")
+      }
+      // 選択された食事のセルの位置を取得
+      guard let indexPath = tableView.indexPath(for: selectMealCell) else {
+        fatalError("The selected cell is not being displayed by the table")
+      }
+      // 選択された食事を取得
+      let selectedMeal = meals[indexPath.row]
+      // 遷移先のViewControllerに食事を設定
+      mealDetailViewController.meal = selectedMeal
+    // それ以外の場合
+    default:
+      // あり得ないのでError
+      fatalError("Unexpected Segue Identifier; \(String(describing: segue.identifier))")
+    }
   }
 
   // MARK: - Table view data source
@@ -47,6 +82,15 @@ class MealTableViewController: UITableViewController {
     return cell
   }
 
+  override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    if editingStyle == .delete {
+      // 食事を削除
+      meals.remove(at: indexPath.row)
+      tableView.deleteRows(at: [indexPath], with: .fade)
+    } else if editingStyle == .insert {
+      // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+    }
+  }
 
   // MARK: Actions
   @IBAction func unwindToMealList(sender: UIStoryboardSegue) {
@@ -54,10 +98,20 @@ class MealTableViewController: UITableViewController {
     if let sourceViewController = sender.source as? MealViewController,
        let meal = sourceViewController.meal
     {
-      // 取得した食事情報をTableViewに追加
-      let newIndexPath = IndexPath(row: meals.count, section: 0)
-      meals.append(meal)
-      tableView.insertRows(at: [newIndexPath], with: .automatic)
+      // 更新
+      // 更新対象のセルのパスを取得
+      if let selectedIndexPath = tableView.indexPathForSelectedRow {
+        // 更新対象のセルにmealを設定
+        meals[selectedIndexPath.row] = meal
+        // テーブルビューを更新
+        tableView.reloadRows(at: [selectedIndexPath], with: .none)
+      } else {
+        // 新規追加
+        // 取得した食事情報をTableViewに追加
+        let newIndexPath = IndexPath(row: meals.count, section: 0)
+        meals.append(meal)
+        tableView.insertRows(at: [newIndexPath], with: .automatic)
+      }
     }
   }
 
