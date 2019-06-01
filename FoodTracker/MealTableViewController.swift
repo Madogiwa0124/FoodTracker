@@ -16,7 +16,12 @@ class MealTableViewController: UITableViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     navigationItem.leftBarButtonItem = editButtonItem
-    loadSampleMeals()
+    // 保存済みの食事を取得、取得出来なかったらサンプルを取得
+    if let savedMeals = loadMeals() {
+      meals += savedMeals
+    } else {
+      loadSampleMeals()
+    }
   }
 
   //MARK: - Navigation
@@ -84,8 +89,11 @@ class MealTableViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
     if editingStyle == .delete {
-      // 食事を削除
+      // 配列から食事を削除
       meals.remove(at: indexPath.row)
+      // 食事の保存
+      saveMeals()
+      // Viewから食事を削除
       tableView.deleteRows(at: [indexPath], with: .fade)
     } else if editingStyle == .insert {
       // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
@@ -111,6 +119,8 @@ class MealTableViewController: UITableViewController {
         let newIndexPath = IndexPath(row: meals.count, section: 0)
         meals.append(meal)
         tableView.insertRows(at: [newIndexPath], with: .automatic)
+        // Mealの保存処理
+        saveMeals()
       }
     }
   }
@@ -131,5 +141,20 @@ class MealTableViewController: UITableViewController {
       fatalError("Unable to instantiate meal3")
     }
     meals += [meal1, meal2, meal3]
+  }
+
+  private func saveMeals() {
+    // 保存先にmealsを保存
+    let isSuccessfullSave = NSKeyedArchiver.archiveRootObject(meals, toFile: Meal.ArchiveURL.path)
+    if isSuccessfullSave {
+      os_log("Meal successfull saved.", log: OSLog.default, type: .debug)
+    } else {
+      os_log("Failed to save meals...", log: OSLog.default, type: .error)
+    }
+  }
+
+  private func loadMeals() -> [Meal]? {
+    // 保存先からmealsを取得
+    return NSKeyedUnarchiver.unarchiveObject(withFile: Meal.ArchiveURL.path) as? [Meal]
   }
 }
